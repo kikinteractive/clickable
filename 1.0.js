@@ -162,7 +162,9 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 			}
 
 			e.preventDefault();
+			e.stopImmediatePropagation();
 			e.stopPropagation();
+			e.returnValue = false;
 			return false;
 		}, false);
 	}
