@@ -4,6 +4,10 @@
  * Copyright (c) 2012 Kik Interactive, http://kik.com
  * Released under the MIT license
  *
+ * dataset ployfill
+ * Copyright (c) 2012 Remy Sharp, http://remysharp.com
+ * Released under the MIT license
+ *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
  * files (the "Software"), to deal in the Software without
@@ -25,6 +29,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+
+(function(){function c(){d=!0;this.removeEventListener("DOMAttrModified",c,!1)}function e(){var b={};g.call(this.attributes,function(a){if(f=a.name.match(h))b[f[1].replace(i,function(a,b){return b.toUpperCase()})]=a.value});return b}var g=[].forEach,h=/^data-(.+)/,i=/\-([a-z])/ig,a=document.createElement("div"),d=!1,f;void 0==a.dataset&&(a.addEventListener("DOMAttrModified",c,!1),a.setAttribute("foo","bar"),Element.prototype.__defineGetter__("dataset",d?function(){this._datasetCache||(this._datasetCache=e.call(this));return this._datasetCache}:e),document.addEventListener("DOMAttrModified",function(a){delete a.target._datasetCache},!1))})();
 
 var Clickable = function (window, document, clik, Zepto, jQuery) {
 	var os = mobileOS();
@@ -108,6 +114,8 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 			touchDown   = false,
 			allowEvent  = false,
 			lastTouch;
+
+		elem.dataset.clickableActiveClass = activeClass;
 
 		elem.style['-webkit-tap-highlight-color'] = 'transparent';
 
