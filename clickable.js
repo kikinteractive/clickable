@@ -152,6 +152,11 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 		function cancelTouch () {
 			allowEvent = false;
 			touchDown  = false;
+
+			if (elem.disabled) {
+				return;
+			}
+
 			elem.className = trimString( elem.className.replace(activeRegex, '') );
 		}
 
