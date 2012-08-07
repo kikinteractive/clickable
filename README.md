@@ -49,6 +49,17 @@ $('#my-element').clickable('mydownstate');
 ```
 
 
+### Disable / enable buttons
+
+```js
+// disable
+$('#my-element').prop('disabled', true);
+
+// enable
+$('#my-element').prop('disabled', false);
+```
+
+
 
 
 Standalone Usage
@@ -77,4 +88,15 @@ element.addEventListener('click', function () {
 
 ```js
 Clickable(element, 'mydownstate');
+```
+
+
+### Disable / enable buttons
+
+```js
+// disable
+element.disabled = true;
+
+// enable
+element.disabled = false;
 ```
