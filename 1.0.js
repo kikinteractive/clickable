@@ -33,6 +33,8 @@
 (function(){function c(){d=!0;this.removeEventListener("DOMAttrModified",c,!1)}function e(){var b={};g.call(this.attributes,function(a){if(f=a.name.match(h))b[f[1].replace(i,function(a,b){return b.toUpperCase()})]=a.value});return b}var g=[].forEach,h=/^data-(.+)/,i=/\-([a-z])/ig,a=document.createElement("div"),d=!1,f;void 0==a.dataset&&(a.addEventListener("DOMAttrModified",c,!1),a.setAttribute("foo","bar"),Element.prototype.__defineGetter__("dataset",d?function(){this._datasetCache||(this._datasetCache=e.call(this));return this._datasetCache}:e),document.addEventListener("DOMAttrModified",function(a){delete a.target._datasetCache},!1))})();
 
 var Clickable = function (window, document, clik, Zepto, jQuery) {
+	var TRIM_REGEX = /^\s+|\s+$/g;
+
 	var os = mobileOS();
 
 	function mobileOS () {
@@ -58,6 +60,10 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 		data[ name ] = true;
 
 		return data;
+	}
+
+	function trimString (str) {
+		return String(str).replace(TRIM_REGEX, '');
 	}
 
 	function isDOMNode (elem) {
@@ -125,8 +131,14 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 		elem.addEventListener('touchcancel' , cancelTouch , false);
 
 		function startTouch () {
-			touchDown  = true;
 			allowEvent = false;
+
+			if (elem.disabled) {
+				touchDown = false;
+				return;
+			}
+
+			touchDown  = true;
 			lastTouch  = +new Date();
 			var touch  = lastTouch;
 
@@ -138,16 +150,21 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 		}
 
 		function cancelTouch () {
-			touchDown  = false;
 			allowEvent = false;
-			elem.className = elem.className.replace(activeRegex, '');
+			touchDown  = false;
+
+			if (elem.disabled) {
+				return;
+			}
+
+			elem.className = trimString( elem.className.replace(activeRegex, '') );
 		}
 
 		function endTouch () {
 			var fireEvent = touchDown;
 			cancelTouch();
 
-			if ( !fireEvent ) {
+			if (!fireEvent || elem.disabled) {
 				return;
 			}
 
@@ -164,7 +181,7 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 		}
 
 		elem.addEventListener('click', function (e) {
-			if (allowEvent) {
+			if (!elem.disabled && allowEvent) {
 				allowEvent = false;
 				return;
 			}
