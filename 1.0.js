@@ -91,13 +91,23 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 		return true;
 	}
 
+	function isInDOM (elem) {
+		while (elem = elem.parentNode) {
+			if (elem === document) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	function supportsTouchClick () {
 		return os.ios || os.android;
 	}
 
 	function enableClicking (elem, activeClass) {
 		if ( !isDOMNode(elem) ) {
-			throw elem + ' is not a DOM element';
+			throw TypeError('element ' + elem + ' must be a DOM element');
 		}
 
 		if (elem._clickable) {
@@ -130,10 +140,33 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 
 		elem.style['-webkit-tap-highlight-color'] = 'transparent';
 
-		elem.addEventListener('touchstart'  , startTouch  , false);
-		elem.addEventListener('touchmove'   , cancelTouch , false);
-		elem.addEventListener('touchend'    , endTouch    , false);
-		elem.addEventListener('touchcancel' , cancelTouch , false);
+		elem.addEventListener('click', onClick, false);
+
+		if (os.ios) {
+			elem.addEventListener('DOMNodeInsertedIntoDocument', bindTouchEvent   , false);
+			elem.addEventListener('DOMNodeRemovedFromDocument' , unbindTouchEvents, false);
+
+			if ( isInDOM(elem) ) {
+				bindTouchEvent();
+			}
+		}
+		else {
+			bindTouchEvent();
+		}
+
+		function bindTouchEvent () {
+			elem.addEventListener('touchstart'  , startTouch  , false);
+			elem.addEventListener('touchmove'   , cancelTouch , false);
+			elem.addEventListener('touchend'    , endTouch    , false);
+			elem.addEventListener('touchcancel' , cancelTouch , false);
+		}
+
+		function unbindTouchEvents () {
+			elem.removeEventListener('touchstart'  , startTouch );
+			elem.removeEventListener('touchmove'   , cancelTouch);
+			elem.removeEventListener('touchend'    , endTouch   );
+			elem.removeEventListener('touchcancel' , cancelTouch);
+		}
 
 		function activateButton () {
 			elem.className += ' ' + activeClass;
@@ -209,7 +242,7 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 			}
 		}
 
-		elem.addEventListener('click', function (e) {
+		function onClick (e) {
 			if (!elem.disabled && allowEvent) {
 				allowEvent = false;
 				return;
@@ -220,7 +253,7 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 			e.stopPropagation();
 			e.returnValue = false;
 			return false;
-		}, false);
+		}
 	}
 
 	function setupClik () {
