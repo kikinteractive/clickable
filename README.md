@@ -8,6 +8,14 @@ Some of the other benefits of this library include overcoming the arbitrary wait
 clickable.js also provides convenient bindings for ZeptoJS and jQuery to make the development process as seamless as possible.
 
 
+Links
+-----
+
+[Download script (v1.0 minified)](http://code.kik.com/clickable/1.0.min.js)
+
+[View demo](http://code.kik.com/clickable/demos/basic.html)
+
+
 Usage with ZeptoJS or jQuery
 ----------------------------
 
