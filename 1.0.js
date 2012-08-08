@@ -33,7 +33,8 @@
 (function(){function c(){d=!0;this.removeEventListener("DOMAttrModified",c,!1)}function e(){var b={};g.call(this.attributes,function(a){if(f=a.name.match(h))b[f[1].replace(i,function(a,b){return b.toUpperCase()})]=a.value});return b}var g=[].forEach,h=/^data-(.+)/,i=/\-([a-z])/ig,a=document.createElement("div"),d=!1,f;void 0==a.dataset&&(a.addEventListener("DOMAttrModified",c,!1),a.setAttribute("foo","bar"),Element.prototype.__defineGetter__("dataset",d?function(){this._datasetCache||(this._datasetCache=e.call(this));return this._datasetCache}:e),document.addEventListener("DOMAttrModified",function(a){delete a.target._datasetCache},!1))})();
 
 var Clickable = function (window, document, clik, Zepto, jQuery) {
-	var TRIM_REGEX = /^\s+|\s+$/g;
+	var TRIM_REGEX   = /^\s+|\s+$/g,
+		ACTIVE_DELAY = 40;
 
 	var os = mobileOS();
 
@@ -90,6 +91,10 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 		return true;
 	}
 
+	function supportsTouchClick () {
+		return os.ios || os.android;
+	}
+
 	function enableClicking (elem, activeClass) {
 		if ( !isDOMNode(elem) ) {
 			throw elem + ' is not a DOM element';
@@ -100,7 +105,7 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 		}
 		elem._clickable = true;
 
-		if (!os.ios && !os.android) {
+		if ( !supportsTouchClick() ) {
 			return;
 		}
 
@@ -130,6 +135,14 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 		elem.addEventListener('touchend'    , endTouch    , false);
 		elem.addEventListener('touchcancel' , cancelTouch , false);
 
+		function activateButton () {
+			elem.className += ' ' + activeClass;
+		}
+
+		function deactivateButton () {
+			elem.className = trimString( elem.className.replace(activeRegex, '') );
+		}
+
 		function startTouch () {
 			allowEvent = false;
 
@@ -144,9 +157,9 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 
 			setTimeout(function () {
 				if (touchDown && (touch === lastTouch)) {
-					elem.className += ' ' + activeClass;
+					activateButton();
 				}
-			}, 40);
+			}, ACTIVE_DELAY);
 		}
 
 		function cancelTouch () {
@@ -157,27 +170,43 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 				return;
 			}
 
-			elem.className = trimString( elem.className.replace(activeRegex, '') );
+			deactivateButton();
 		}
 
 		function endTouch () {
-			var fireEvent = touchDown;
+			var shouldFireEvent = touchDown;
 			cancelTouch();
 
-			if (!fireEvent || elem.disabled) {
+			if (!shouldFireEvent || elem.disabled) {
 				return;
 			}
 
-			allowEvent = true;
+			var touchDuration = +new Date() - lastTouch;
 
-			var evt = document.createEvent('MouseEvents');
-			evt.initMouseEvent(
-				'click' , true , true , window,
-				1       , 0    , 0    , 0     , 0,
-				false   , false, false, false ,
-				0       , null
-			);
-			elem.dispatchEvent(evt);
+			if (touchDuration > ACTIVE_DELAY) {
+				fireEvent();
+			}
+			else {
+				activateButton();
+
+				setTimeout(function () {
+					deactivateButton();
+					fireEvent();
+				}, 1);
+			}
+
+			function fireEvent () {
+				allowEvent = true;
+
+				var evt = document.createEvent('MouseEvents');
+				evt.initMouseEvent(
+					'click' , true , true , window,
+					1       , 0    , 0    , 0     , 0,
+					false   , false, false, false ,
+					0       , null
+				);
+				elem.dispatchEvent(evt);
+			}
 		}
 
 		elem.addEventListener('click', function (e) {
@@ -240,6 +269,10 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 		function Clickable () {
 			enableClicking.apply(this, arguments);
 		}
+
+		Clickable.touchable = function () {
+			return supportsTouchClick();
+		};
 
 		return Clickable;
 	}
