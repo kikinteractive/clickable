@@ -138,7 +138,7 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 
 		elem.dataset.clickableActiveClass = activeClass;
 
-		elem.style['-webkit-tap-highlight-color'] = 'transparent';
+		elem.style['-webkit-tap-highlight-color'] = 'rgba(255,255,255,0)';
 
 		elem.addEventListener('click', onClick, false);
 
@@ -206,11 +206,16 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 			deactivateButton();
 		}
 
-		function endTouch () {
+		function endTouch (e) {
 			var shouldFireEvent = touchDown;
 			cancelTouch();
 
 			if (!shouldFireEvent || elem.disabled) {
+				return;
+			}
+
+			if ( !e.stopImmediatePropagation ) {
+				allowEvent = true;
 				return;
 			}
 
@@ -248,9 +253,12 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 				return;
 			}
 
+			if (e.stopImmediatePropagation) {
+				e.stopImmediatePropagation();
+			}
 			e.preventDefault();
-			e.stopImmediatePropagation();
 			e.stopPropagation();
+			e.cancelBubble = true;
 			e.returnValue = false;
 			return false;
 		}
