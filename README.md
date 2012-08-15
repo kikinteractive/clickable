@@ -108,17 +108,3 @@ element.disabled = true;
 // enable
 element.disabled = false;
 ```
-
-
-### Check for touch-enabled buttons
-
-We use touch events to simulate clicking on devices with touchscreens.
-
-```js
-if ( !Clickable.touchable() ) {
-	// normal desktop mode
-}
-else {
-	// touch-based click events
-}
-```
