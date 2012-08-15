@@ -28,7 +28,6 @@
 				-webkit-user-select: none;
 				user-select: none;
 			}
-			.desktop #button:hover:active,
 			#button.active {
 				padding: 9px 12px 7px;
 				background: #EEE;
@@ -57,10 +56,6 @@
 						'<div>' + new Date() + '</div>'
 					);
 				});
-
-			if ( !Clickable.touchable() ) {
-				$('body').addClass('desktop');
-			}
 		</script>
 	</body>
 </html>
