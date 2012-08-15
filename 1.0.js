@@ -4,10 +4,6 @@
  * Copyright (c) 2012 Kik Interactive, http://kik.com
  * Released under the MIT license
  *
- * dataset ployfill
- * Copyright (c) 2012 Remy Sharp, http://remysharp.com
- * Released under the MIT license
- *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
  * files (the "Software"), to deal in the Software without
@@ -29,8 +25,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-
-(function(){function c(){d=!0;this.removeEventListener("DOMAttrModified",c,!1)}function e(){var b={};g.call(this.attributes,function(a){if(f=a.name.match(h))b[f[1].replace(i,function(a,b){return b.toUpperCase()})]=a.value});return b}var g=[].forEach,h=/^data-(.+)/,i=/\-([a-z])/ig,a=document.createElement("div"),d=!1,f;void 0==a.dataset&&(a.addEventListener("DOMAttrModified",c,!1),a.setAttribute("foo","bar"),Element.prototype.__defineGetter__("dataset",d?function(){this._datasetCache||(this._datasetCache=e.call(this));return this._datasetCache}:e),document.addEventListener("DOMAttrModified",function(a){delete a.target._datasetCache},!1))})();
 
 var Clickable = function (window, document, clik, Zepto, jQuery) {
 	var TRIM_REGEX   = /^\s+|\s+$/g,
@@ -115,10 +109,6 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 		}
 		elem._clickable = true;
 
-		if ( !supportsTouchClick() ) {
-			return;
-		}
-
 		switch (typeof activeClass) {
 			case 'undefined':
 				activeClass = 'active';
@@ -136,7 +126,23 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 			allowEvent  = false,
 			lastTouch;
 
-		elem.dataset.clickableActiveClass = activeClass;
+		if ( !supportsTouchClick() ) {
+			if (elem.addEventListener) {
+				elem.addEventListener('mousedown' , startMouse  , false);
+				elem.addEventListener('mousemove' , cancelMouse , false);
+				elem.addEventListener('mouseout'  , cancelMouse , false);
+				elem.addEventListener('mouseup'   , endMouse    , false);
+				elem.addEventListener('click'     , onClick     , false);
+			}
+			else if (elem.attachEvent) {
+				elem.attachEvent('onmousedown' , startMouse );
+				elem.attachEvent('onmousemove' , cancelMouse);
+				elem.attachEvent('onmouseout'  , cancelMouse);
+				elem.attachEvent('onmouseup'   , endMouse   );
+				elem.attachEvent('onclick'     , onClick    );
+			}
+			return;
+		}
 
 		elem.style['-webkit-tap-highlight-color'] = 'rgba(255,255,255,0)';
 
@@ -174,6 +180,46 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 
 		function deactivateButton () {
 			elem.className = trimString( elem.className.replace(activeRegex, '') );
+		}
+
+		function startMouse (e) {
+			allowEvent = false;
+
+			if (elem.disabled) {
+				e.preventDefault();
+				touchDown = false;
+				return;
+			}
+
+			touchDown = true;
+			activateButton();
+		}
+
+		function cancelMouse (e) {
+			e.preventDefault();
+			touchDown  = false;
+			allowEvent = false;
+			deactivateButton();
+		}
+
+		function endMouse (e) {
+			if (elem.disabled) {
+				e.preventDefault();
+				touchDown  = false;
+				allowEvent = false;
+				return;
+			}
+
+			if ( !touchDown ) {
+				e.preventDefault();
+				allowEvent = false;
+			}
+			else {
+				allowEvent = true;
+			}
+
+			touchDown = false;
+			deactivateButton();
 		}
 
 		function startTouch () {
@@ -248,6 +294,8 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 		}
 
 		function onClick (e) {
+			e = e || window.event;
+
 			if (!elem.disabled && allowEvent) {
 				allowEvent = false;
 				return;
