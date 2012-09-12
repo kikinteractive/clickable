@@ -222,17 +222,29 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 			deactivateButton();
 		}
 
-		function startTouch () {
+		function startTouch (e) {
 			allowEvent = false;
 
-			if (elem.disabled) {
+			var target         = e.target,
+				firstClickable = false;
+
+			do {
+				if (target === elem) {
+					firstClickable = true;
+				}
+				else if (target._clickable) {
+					break;
+				}
+			} while (target = target.parentNode);
+
+			if (elem.disabled || !firstClickable) {
 				touchDown = false;
 				return;
 			}
 
-			touchDown  = true;
-			lastTouch  = +new Date();
-			var touch  = lastTouch;
+			touchDown = true;
+			lastTouch = +new Date();
+			var touch = lastTouch;
 
 			setTimeout(function () {
 				if (touchDown && (touch === lastTouch)) {
