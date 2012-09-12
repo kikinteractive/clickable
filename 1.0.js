@@ -182,10 +182,23 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 			elem.className = trimString( elem.className.replace(activeRegex, '') );
 		}
 
+		function isClosestClickable (target, elem) {
+			do {
+				if (target === elem) {
+					return true;
+				}
+				else if (target._clickable) {
+					return false;
+				}
+			} while (target = target.parentNode);
+
+			return false;
+		}
+
 		function startMouse (e) {
 			allowEvent = false;
 
-			if (elem.disabled) {
+			if (elem.disabled || !isClosestClickable(e.target, elem)) {
 				e.preventDefault();
 				touchDown = false;
 				return;
@@ -225,19 +238,7 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 		function startTouch (e) {
 			allowEvent = false;
 
-			var target         = e.target,
-				firstClickable = false;
-
-			do {
-				if (target === elem) {
-					firstClickable = true;
-				}
-				else if (target._clickable) {
-					break;
-				}
-			} while (target = target.parentNode);
-
-			if (elem.disabled || !firstClickable) {
+			if (elem.disabled || !isClosestClickable(e.target, elem)) {
 				touchDown = false;
 				return;
 			}
