@@ -121,6 +121,8 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 				throw TypeError('active class ' + activeClass + ' must be a string');
 		}
 
+		elem.setAttribute('data-clickable-class', activeClass);
+
 		var activeRegex = new RegExp('\\b' + activeClass + '\\b'),
 			touchDown   = false,
 			allowEvent  = false,
