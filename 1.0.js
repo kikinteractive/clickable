@@ -25,7 +25,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-
 var Clickable = function (window, document, clik, Zepto, jQuery) {
 	var TRIM_REGEX   = /^\s+|\s+$/g,
 		ACTIVE_DELAY = 40;
@@ -120,6 +119,8 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 			default:
 				throw TypeError('active class ' + activeClass + ' must be a string');
 		}
+
+		elem.setAttribute('data-clickable-class', activeClass);
 
 		var activeRegex = new RegExp('\\b' + activeClass + '\\b'),
 			touchDown   = false,
