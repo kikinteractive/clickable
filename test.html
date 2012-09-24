@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Clickable Test</title>
+	</head>
+
+	<body>
+		<div id="button">Button</div>
+
+		<script src="clickable.js"></script>
+		<script>
+			(function (window, document) {
+				var button = document.getElementById('button');
+
+				Clickable(button);
+
+				button.addEventListener('click', function () {
+					console.log('click : ' + +new Date());
+				}, false);
+			})(window, document);
+		</script>
+	</body>
+</html>
