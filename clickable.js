@@ -212,7 +212,7 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 		function startTouch (e) {
 			allowEvent = false;
 
-			if (elem.disabled || !isClosestClickable(e.target, elem)) {
+			if (elem.disabled || (e.touches.length !== 1) || !isClosestClickable(e.target, elem)) {
 				touchDown = false;
 				return;
 			}
