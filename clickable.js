@@ -2,7 +2,8 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 	var TRIM_REGEX   = /^\s+|\s+$/g,
 		ACTIVE_DELAY = 40;
 
-	var os = mobileOS();
+	var singleButtonLock = false,
+		os               = mobileOS();
 
 	function mobileOS () {
 		var ua = window.navigator.userAgent,
@@ -156,6 +157,18 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 			elem.className = trimString( elem.className.replace(activeRegex, '') );
 		}
 
+		function activateLock () {
+			singleButtonLock = true;
+		}
+
+		function deactivateLock () {
+			if (singleButtonLock) {
+				setTimeout(function () {
+					singleButtonLock = true;
+				}, 50);
+			}
+		}
+
 		function isClosestClickable (target, elem) {
 			do {
 				if (target === elem) {
@@ -212,14 +225,15 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 		function startTouch (e) {
 			allowEvent = false;
 
-			if (elem.disabled || (e.touches.length !== 1) || !isClosestClickable(e.target, elem)) {
+			if (singleButtonLock || elem.disabled || (e.touches.length !== 1) || !isClosestClickable(e.target, elem)) {
 				touchDown = false;
 				return;
 			}
 
-			touchDown = true;
-			lastTouch = +new Date();
-			var touch = lastTouch;
+			singleButtonLock = true;
+			touchDown        = true;
+			lastTouch        = +new Date();
+			var touch        = lastTouch;
 
 			setTimeout(function () {
 				if (touchDown && (touch === lastTouch)) {
@@ -228,9 +242,13 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 			}, ACTIVE_DELAY);
 		}
 
-		function cancelTouch () {
-			allowEvent = false;
-			touchDown  = false;
+		function cancelTouch (e) {
+			allowEvent       = false;
+			touchDown        = false;
+
+			if (e) {
+				singleButtonLock = false;
+			}
 
 			if (elem.disabled) {
 				return;
@@ -244,6 +262,7 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 			cancelTouch();
 
 			if (!shouldFireEvent || elem.disabled) {
+				singleButtonLock = false;
 				return;
 			}
 
@@ -284,7 +303,10 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 			e = e || window.event;
 
 			if (!elem.disabled && allowEvent) {
-				allowEvent = false;
+				allowEvent       = false;
+				setTimeout(function () {
+					singleButtonLock = false;
+				}, 0);
 				return;
 			}
 
