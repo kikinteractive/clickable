@@ -1,4 +1,4 @@
-var Clickable = function (window, document, clik, Zepto, jQuery) {
+var Clickable = function (window, document, Zepto, jQuery) {
 	var TRIM_REGEX   = /^\s+|\s+$/g,
 		ACTIVE_DELAY = 40;
 
@@ -321,14 +321,67 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 		}
 	}
 
-	function setupClik () {
-		if ( !clik ) {
-			return;
+	function enableStickyClick (button, activeClass, holdFunction) {
+		if ( !isDOMNode(button) ) {
+			throw TypeError('button must be a DOM element, got ' + button);
 		}
 
-		clik.plugin('clickable', function () {
-			enableClicking.apply(this, arguments);
-		});
+		switch (typeof activeClass) {
+			case 'string':
+				break;
+
+			case 'function':
+				holdFunction = activeClass;
+				activeClass  = undefined;
+				break;
+
+			default:
+				throw TypeError('button active class must be a string if defined, got ' + activeClass);
+		}
+
+		if (typeof holdFunction !== 'function') {
+			throw TypeError('sticky click handler must be a function, got ' + holdFunction);
+		}
+
+		enableClicking(button);
+
+		button.addEventListener('click', handleStickyClick, false);
+
+		function handleStickyClick () {
+			var lock        = false,
+				activeClass = button.getAttribute('data-clickable-class') || 'active',
+				value;
+
+			button.disabled = true;
+			button.className += ' ' + activeClass;
+
+			try {
+				value = holdFunction(cleanUp);
+			}
+			catch (err) {
+				if (window.console && window.console.error) {
+					window.console.error(err + '');
+				}
+
+				cleanUp();
+			}
+
+			if (value === false) {
+				cleanUp();
+			}
+
+			function cleanUp () {
+				if (lock) {
+					return;
+				}
+				lock = true;
+
+				if (button.disabled) {
+					button.disabled = false;
+					button.className = button.className.replace(new RegExp('\\b'+activeClass+'\\b', 'g'), '');
+				}
+			}
+		}
 	}
 
 	function setupZepto () {
@@ -340,6 +393,12 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 			clickable : function (activeClass) {
 				this.forEach(function (elem) {
 					enableClicking(elem, activeClass);
+				});
+				return this;
+			},
+			stickyClick : function (holdFunction) {
+				this.forEach(function (elem) {
+					enableStickyClick(elem, holdFunction);
 				});
 				return this;
 			}
@@ -357,10 +416,15 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 			});
 			return this;
 		};
+		jQuery.fn.stickyClick = function (holdFunction) {
+			this.each(function () {
+				enableStickyClick(this, holdFunction);
+			});
+			return this;
+		};
 	}
 
 	function main () {
-		setupClik();
 		setupZepto();
 		setupJQuery();
 
@@ -372,8 +436,12 @@ var Clickable = function (window, document, clik, Zepto, jQuery) {
 			return supportsTouchClick();
 		};
 
+		Clickable.sticky = function () {
+			enableStickyClick.apply(this, arguments);
+		};
+
 		return Clickable;
 	}
 
 	return main();
-}(window, document, window.clik, window.Zepto, window.jQuery);
+}(window, document, window.Zepto, window.jQuery);

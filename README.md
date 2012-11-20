@@ -11,7 +11,7 @@ clickable.js also provides convenient bindings for ZeptoJS and jQuery to make th
 Links
 -----
 
-[Download script (v1.0 minified)](http://code.kik.com/clickable/1.0.min.js)
+[Download script (v1.1.0 minified)](http://cdn.kik.com/clickable/1.1.0/clickable.js)
 
 [View demo](http://code.kik.com/clickable/demos/basic.html)
 
@@ -31,6 +31,19 @@ $('#my-element').clickable();
 ```js
 $('#my-element').on('click', function () {
 	// fired on click
+});
+```
+
+
+### Sticky buttons
+
+```js
+$('#my-element').stickyClick(function (unstick) {
+	// do something async
+	unstick();
+	
+	// button will remain in downstate
+	// until unstick is called
 });
 ```
 
@@ -89,6 +102,16 @@ Clickable(element);
 element.addEventListener('click', function () {
 	// fired on click
 }, false);
+```
+
+
+### Sticky buttons
+
+```js
+Clickable.sticky(element, function (unstick) {
+	// do something async
+	unstick();
+});
 ```
 
 
