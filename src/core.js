@@ -1,76 +1,8 @@
-var Clickable = function (window, document, Zepto, jQuery) {
-	var TRIM_REGEX   = /^\s+|\s+$/g,
-		ACTIVE_DELAY = 40;
+Clickable._enableClicking = function (os, trimString, isDOMNode) {
+	var ACTIVE_DELAY = 40;
 
 	var singleButtonLock = false,
-		os               = mobileOS();
-
-	function mobileOS () {
-		var ua = window.navigator.userAgent,
-			name, version,
-			m;
-
-		if ((m = /\bCPU.*OS (\d+(_\d+)?)/i.exec(ua))) {
-			name = 'ios';
-			version = m[1].replace('_', '.');
-		}
-
-		else if ((m = /\bAndroid (\d+(\.\d+)?)/.exec(ua))) {
-			name = 'android';
-			version = m[1];
-		}
-
-		var data = {
-			name    : name,
-			version : version && window.parseFloat(version)
-		};
-
-		data[ name ] = true;
-
-		return data;
-	}
-
-	function trimString (str) {
-		return String(str).replace(TRIM_REGEX, '');
-	}
-
-	function isDOMNode (elem) {
-		if ( !elem ) {
-			return false;
-		}
-
-		try {
-			return (elem instanceof Node) || (elem instanceof HTMLElement);
-		} catch (err) {}
-
-		if (typeof elem !== 'object') {
-			return false;
-		}
-
-		if (typeof elem.nodeType !== 'number') {
-			return false;
-		}
-
-		if (typeof elem.nodeName !== 'string') {
-			return false;
-		}
-
-		return true;
-	}
-
-	function isInDOM (elem) {
-		while (elem = elem.parentNode) {
-			if (elem === document) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	function supportsTouchClick () {
-		return os.ios || os.android;
-	}
+		isIOS            = !!os.ios;
 
 	function enableClicking (elem, activeClass) {
 		if ( !isDOMNode(elem) ) {
@@ -101,7 +33,7 @@ var Clickable = function (window, document, Zepto, jQuery) {
 			allowEvent  = false,
 			lastTouch;
 
-		if ( !supportsTouchClick() ) {
+		if ( !os.touchable ) {
 			if (elem.addEventListener) {
 				elem.addEventListener('mousedown' , startMouse  , false);
 				elem.addEventListener('mousemove' , cancelMouse , false);
@@ -321,127 +253,9 @@ var Clickable = function (window, document, Zepto, jQuery) {
 		}
 	}
 
-	function enableStickyClick (button, activeClass, holdFunction) {
-		if ( !isDOMNode(button) ) {
-			throw TypeError('button must be a DOM element, got ' + button);
-		}
-
-		switch (typeof activeClass) {
-			case 'string':
-				break;
-
-			case 'function':
-				holdFunction = activeClass;
-				activeClass  = undefined;
-				break;
-
-			default:
-				throw TypeError('button active class must be a string if defined, got ' + activeClass);
-		}
-
-		if (typeof holdFunction !== 'function') {
-			throw TypeError('sticky click handler must be a function, got ' + holdFunction);
-		}
-
-		enableClicking(button);
-
-		button.addEventListener('click', handleStickyClick, false);
-
-		function handleStickyClick () {
-			var lock        = false,
-				activeClass = button.getAttribute('data-clickable-class') || 'active',
-				value;
-
-			button.disabled = true;
-			button.className += ' ' + activeClass;
-
-			try {
-				value = holdFunction(cleanUp);
-			}
-			catch (err) {
-				if (window.console && window.console.error) {
-					window.console.error(err + '');
-				}
-
-				cleanUp();
-			}
-
-			if (value === false) {
-				cleanUp();
-			}
-
-			function cleanUp () {
-				if (lock) {
-					return;
-				}
-				lock = true;
-
-				if (button.disabled) {
-					button.disabled = false;
-					button.className = button.className.replace(new RegExp('\\b'+activeClass+'\\b', 'g'), '');
-				}
-			}
-		}
-	}
-
-	function setupZepto () {
-		if ( !Zepto ) {
-			return;
-		}
-
-		Zepto.extend(Zepto.fn, {
-			clickable : function (activeClass) {
-				this.forEach(function (elem) {
-					enableClicking(elem, activeClass);
-				});
-				return this;
-			},
-			stickyClick : function (holdFunction) {
-				this.forEach(function (elem) {
-					enableStickyClick(elem, holdFunction);
-				});
-				return this;
-			}
-		});
-	}
-
-	function setupJQuery () {
-		if ( !jQuery ) {
-			return;
-		}
-
-		jQuery.fn.clickable = function (activeClass) {
-			this.each(function () {
-				enableClicking(this, activeClass);
-			});
-			return this;
-		};
-		jQuery.fn.stickyClick = function (holdFunction) {
-			this.each(function () {
-				enableStickyClick(this, holdFunction);
-			});
-			return this;
-		};
-	}
-
-	function main () {
-		setupZepto();
-		setupJQuery();
-
-		function Clickable () {
-			enableClicking.apply(this, arguments);
-		}
-
-		Clickable.touchable = function () {
-			return supportsTouchClick();
-		};
-
-		Clickable.sticky = function () {
-			enableStickyClick.apply(this, arguments);
-		};
-
-		return Clickable;
-	}
-
-	return main();
-}(window, document, window.Zepto, window.jQuery);
+	return enableClicking;
+}(
+	Clickable._os         , // from utils.js
+	Clickable._trimString , // from utils.js
+	Clickable._isDOMNode    // from utils.js
+);

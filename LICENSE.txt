@@ -1,5 +1,5 @@
 /**
- * clickable.js v1.0
+ * clickable.js
  * Seamless buttons for mobile devices
  * Copyright (c) 2012 Kik Interactive, http://kik.com
  * Released under the MIT license

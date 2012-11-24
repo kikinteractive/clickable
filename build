@@ -3,13 +3,13 @@
 PROJECT="clickable"
 LICENSE="LICENSE.txt"
 MAJOR_VERSION="1"
-MINOR_VERSION="1"
+MINOR_VERSION="2"
 BUG_VERSION="0"
 AWS_BUCKET="cdn.kik.com"
 AWS_CFG="${HOME}/.s3cfg-kik"
 
 buildProject () {
-	buildJS "clickable.js" "clickable.js"
+	buildJS "clickable.js" "src/clickable.js src/utils.js src/core.js src/stickyClick.js"
 }
 
 
@@ -34,6 +34,12 @@ S3CMD="s3cmd -c ${AWS_CFG}"
 NO_CACHE="--add-header=Cache-Control:no-cache"
 FULL_CACHE="--add-header=Cache-Control:max-age=31557600"
 
+writeToFile () {
+	tmpFile="${1}.tmp"
+	cat - > "${tmpFile}"
+	mv "${tmpFile}" "${1}"
+}
+
 clean () {
 	echo "Cleaning builds"
 	rm -rf "${BUILD_DIR}" "${BUILD_ZIP}"
@@ -46,7 +52,7 @@ createBuildDir () {
 
 preprendLicense () {
 	if [ -n "${LICENSE}" ] ; then
-		cat "${LICENSE}" "${1}" | cat - | tee "${1}" >/dev/null
+		cat "${LICENSE}" "${1}" | writeToFile "${1}"
 	fi
 }
 
@@ -82,7 +88,7 @@ gzipDir () {
 	echo "Gziping files"
 	files="`find ${BUILD_DIR} -name '*' | sed 's/.*\/\..*//' | grep -I './'`"
 	for file in ${files}; do
-		cat "$file" | gzip -fc - | tee "$file" >/dev/null
+		cat "$file" | gzip -fc - | writeToFile "$file"
 	done
 }
 
