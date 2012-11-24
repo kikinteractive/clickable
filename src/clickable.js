@@ -1,8 +1,11 @@
 var Clickable = function (Zepto, jQuery) {
-	// import Clickable._os                 from utils.js
-	// import Clickable._enableClicking     from core.js
-	// import Clickable._enableStickyClick  from stickyClick.js
+	// import Clickable._os                from utils.js
+	// import Clickable._enableClicking    from core.js
+	// import Clickable._enableStickyClick from stickyClick.js
 
+
+
+	// window.Clickable exports
 
 	function Clickable () {
 		Clickable._enableClicking.apply(this, arguments);
@@ -14,6 +17,9 @@ var Clickable = function (Zepto, jQuery) {
 		Clickable._enableStickyClick.apply(this, arguments);
 	};
 
+
+
+	// jQuery exports
 
 	if (jQuery) {
 		jQuery.fn.clickable = function (activeClass) {
@@ -31,6 +37,9 @@ var Clickable = function (Zepto, jQuery) {
 	}
 
 
+
+	// Zepto exports
+
 	if (Zepto) {
 		Zepto.extend(Zepto.fn, {
 			clickable : function (activeClass) {
@@ -47,6 +56,7 @@ var Clickable = function (Zepto, jQuery) {
 			}
 		});
 	}
+
 
 
 	return Clickable;

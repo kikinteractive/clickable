@@ -60,8 +60,6 @@ Clickable._isDOMNode = function (Node, HTMLElement) {
 	};
 }(Node, HTMLElement);
 
-
-
 Clickable._isInDOM = function () {
 	return function (elem) {
 		while (elem = elem.parentNode) {
@@ -73,3 +71,47 @@ Clickable._isInDOM = function () {
 		return false;
 	};
 }();
+
+
+
+Clickable._bindEvents = function () {
+	return function (elem, mapping) {
+		for (var eventName in mapping) {
+			if (elem.addEventListener) {
+				elem.addEventListener(eventName, mapping[eventName], false);
+			}
+			else if (elem.attachEvent) {
+				elem.attachEvent('on'+eventName, mapping[eventName]);
+			}
+		}
+	};
+}();
+
+Clickable._unbindEvents = function () {
+	return function (elem, mapping) {
+		for (var eventName in mapping) {
+			if (elem.removeEventListener) {
+				elem.removeEventListener(eventName, mapping[eventName]);
+			}
+		}
+	};
+}();
+
+
+
+Clickable._addClass = function () {
+	return function (elem, className) {
+		elem.className += ' ' + className;
+	}
+}();
+
+Clickable._removeClass = function (trimString) {
+	return function (elem, className) {
+		elem.className = trimString(
+			elem.className.replace(
+				new RegExp('\\b' + className + '\\b'),
+				''
+			)
+		);
+	}
+}(Clickable._trimString);

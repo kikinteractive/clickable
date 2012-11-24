@@ -1,8 +1,12 @@
-Clickable._enableClicking = function (os, trimString, isDOMNode) {
-	var ACTIVE_DELAY = 40;
+Clickable._enableClicking = function (os, isDOMNode, bindEvents, unbindEvents, addClass, removeClass) {
+	var DEFAULT_ACTIVE_CLASS = 'active' ,
+		DATA_ACTIVE_CLASS    = 'data-clickable-class',
+		ACTIVE_DELAY         = 40;
 
 	var singleButtonLock = false,
 		isIOS            = !!os.ios;
+
+
 
 	function enableClicking (elem, activeClass) {
 		if ( !isDOMNode(elem) ) {
@@ -16,103 +20,116 @@ Clickable._enableClicking = function (os, trimString, isDOMNode) {
 
 		switch (typeof activeClass) {
 			case 'undefined':
-				activeClass = 'active';
-				// fall through
-
+				activeClass = DEFAULT_ACTIVE_CLASS;
+				break;
 			case 'string':
 				break;
-
 			default:
 				throw TypeError('active class ' + activeClass + ' must be a string');
 		}
 
-		elem.setAttribute('data-clickable-class', activeClass);
-
-		var activeRegex = new RegExp('\\b' + activeClass + '\\b'),
-			touchDown   = false,
-			allowEvent  = false,
+		var touchDown  = false,
+			allowEvent = false,
 			lastTouch;
 
-		if ( !os.touchable ) {
-			if (elem.addEventListener) {
-				elem.addEventListener('mousedown' , startMouse  , false);
-				elem.addEventListener('mousemove' , cancelMouse , false);
-				elem.addEventListener('mouseout'  , cancelMouse , false);
-				elem.addEventListener('mouseup'   , endMouse    , false);
-				elem.addEventListener('click'     , onClick     , false);
-			}
-			else if (elem.attachEvent) {
-				elem.attachEvent('onmousedown' , startMouse );
-				elem.attachEvent('onmousemove' , cancelMouse);
-				elem.attachEvent('onmouseout'  , cancelMouse);
-				elem.attachEvent('onmouseup'   , endMouse   );
-				elem.attachEvent('onclick'     , onClick    );
-			}
-			return;
-		}
-
+		elem.setAttribute(DATA_ACTIVE_CLASS, activeClass);
 		elem.style['-webkit-tap-highlight-color'] = 'rgba(255,255,255,0)';
 
-		elem.addEventListener('click', onClick, false);
+		bindCoreEvents();
+		return;
 
-		if (os.ios) {
-			elem.addEventListener('DOMNodeInsertedIntoDocument', bindTouchEvent   , false);
-			elem.addEventListener('DOMNodeRemovedFromDocument' , unbindTouchEvents, false);
 
-			if ( isInDOM(elem) ) {
-				bindTouchEvent();
-			}
-		}
-		else {
-			bindTouchEvent();
-		}
 
-		function bindTouchEvent () {
-			elem.addEventListener('touchstart'  , startTouch  , false);
-			elem.addEventListener('touchmove'   , cancelTouch , false);
-			elem.addEventListener('touchend'    , endTouch    , false);
-			elem.addEventListener('touchcancel' , cancelTouch , false);
-		}
-
-		function unbindTouchEvents () {
-			elem.removeEventListener('touchstart'  , startTouch );
-			elem.removeEventListener('touchmove'   , cancelTouch);
-			elem.removeEventListener('touchend'    , endTouch   );
-			elem.removeEventListener('touchcancel' , cancelTouch);
-		}
+		// Button class management
 
 		function activateButton () {
-			elem.className += ' ' + activeClass;
+			addClass(elem, activeClass);
 		}
 
 		function deactivateButton () {
-			elem.className = trimString( elem.className.replace(activeRegex, '') );
+			removeClass(elem, activeClass);
 		}
 
-		function activateLock () {
-			singleButtonLock = true;
-		}
 
-		function deactivateLock () {
-			if (singleButtonLock) {
-				setTimeout(function () {
-					singleButtonLock = true;
-				}, 50);
+
+		// Event binding management
+
+		function bindCoreEvents () {
+			bindEvents(elem, { click : onClick });
+
+			if ( !os.touchable ) {
+				bindEvents(elem, {
+					mousedown : startMouse  ,
+					mousemove : cancelMouse ,
+					mouseout  : cancelMouse ,
+					mouseup   : endMouse
+				});
+				return;
+			}
+
+			if (os.ios) {
+				bindEvents(elem, {
+					DOMNodeInsertedIntoDocument : bindTouchEvents   ,
+					DOMNodeRemovedFromDocument  : unbindTouchEvents
+				});
+
+				if ( isInDOM(elem) ) {
+					bindTouchEvents();
+				}
+			}
+			else {
+				bindTouchEvents();
 			}
 		}
 
-		function isClosestClickable (target, elem) {
-			do {
-				if (target === elem) {
-					return true;
-				}
-				else if (target._clickable) {
-					return false;
-				}
-			} while (target = target.parentNode);
-
-			return false;
+		function bindTouchEvents () {
+			bindEvents(elem, {
+				touchstart  : startTouch  ,
+				touchmove   : cancelTouch ,
+				touchcancel : cancelTouch ,
+				touchend    : endTouch
+			});
 		}
+
+		function unbindTouchEvents () {
+			unbindEvents(elem, {
+				touchstart  : startTouch  ,
+				touchmove   : cancelTouch ,
+				touchcancel : cancelTouch ,
+				touchend    : endTouch
+			});
+		}
+
+
+
+		// Click event handler
+
+		function onClick (e) {
+			e = e || window.event;
+
+			if (!elem.disabled && allowEvent) {
+				allowEvent = false;
+
+				setTimeout(function () {
+					singleButtonLock = false;
+				}, 0);
+			}
+
+			else {
+				if (e.stopImmediatePropagation) {
+					e.stopImmediatePropagation();
+				}
+				e.preventDefault();
+				e.stopPropagation();
+				e.cancelBubble = true;
+				e.returnValue  = false;
+				return false;
+			}
+		}
+
+
+
+		// Desktop mouse eventing
 
 		function startMouse (e) {
 			allowEvent = false;
@@ -153,6 +170,10 @@ Clickable._enableClicking = function (os, trimString, isDOMNode) {
 			touchDown = false;
 			deactivateButton();
 		}
+
+
+
+		// Mobile touchscreen eventing
 
 		function startTouch (e) {
 			allowEvent = false;
@@ -206,56 +227,55 @@ Clickable._enableClicking = function (os, trimString, isDOMNode) {
 			var touchDuration = +new Date() - lastTouch;
 
 			if (touchDuration > ACTIVE_DELAY) {
-				fireEvent();
+				allowEvent = true;
+				fireClickEvent(elem);
 			}
 			else {
 				activateButton();
 
 				setTimeout(function () {
 					deactivateButton();
-					fireEvent();
+					allowEvent = true;
+					fireClickEvent(elem);
 				}, 1);
 			}
-
-			function fireEvent () {
-				allowEvent = true;
-
-				var evt = document.createEvent('MouseEvents');
-				evt.initMouseEvent(
-					'click' , true , true , window,
-					1       , 0    , 0    , 0     , 0,
-					false   , false, false, false ,
-					0       , null
-				);
-				elem.dispatchEvent(evt);
-			}
-		}
-
-		function onClick (e) {
-			e = e || window.event;
-
-			if (!elem.disabled && allowEvent) {
-				allowEvent       = false;
-				setTimeout(function () {
-					singleButtonLock = false;
-				}, 0);
-				return;
-			}
-
-			if (e.stopImmediatePropagation) {
-				e.stopImmediatePropagation();
-			}
-			e.preventDefault();
-			e.stopPropagation();
-			e.cancelBubble = true;
-			e.returnValue = false;
-			return false;
 		}
 	}
 
+
+
+	function isClosestClickable (target, elem) {
+		do {
+			if (target === elem) {
+				return true;
+			}
+			else if (target._clickable) {
+				return false;
+			}
+		} while (target = target.parentNode);
+
+		return false;
+	}
+
+	function fireClickEvent (elem) {
+		var evt = document.createEvent('MouseEvents');
+		evt.initMouseEvent(
+			'click' , true , true , window,
+			1       , 0    , 0    , 0     , 0,
+			false   , false, false, false ,
+			0       , null
+		);
+		elem.dispatchEvent(evt);
+	}
+
+
+
 	return enableClicking;
 }(
-	Clickable._os         , // from utils.js
-	Clickable._trimString , // from utils.js
-	Clickable._isDOMNode    // from utils.js
+	Clickable._os           , // from utils.js
+	Clickable._isDOMNode    , // from utils.js
+	Clickable._bindEvents   , // from utils.js
+	Clickable._unbindEvents , // from utils.js
+	Clickable._addClass     , // from utils.js
+	Clickable._removeClass    // from utils.js
 );

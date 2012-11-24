@@ -1,4 +1,5 @@
 Clickable._enableStickyClick = function (trimString, isDOMNode, enableClicking) {
+	var DATA_ACTIVE_CLASS = 'data-clickable-class';
 
 
 	function enableStickyClick (button, activeClass, holdFunction) {
@@ -36,7 +37,7 @@ Clickable._enableStickyClick = function (trimString, isDOMNode, enableClicking) 
 	function createStickyClickHandler (button, holdFunction) {
 		return function () {
 			var lock        = false,
-				activeClass = button.getAttribute('data-clickable-class') || 'active',
+				activeClass = button.getAttribute(DATA_ACTIVE_CLASS),
 				value;
 
 			button.disabled = true;
