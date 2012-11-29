@@ -5,7 +5,6 @@ Clickable._os = function (userAgent, parseFloat) {
 		name    = 'ios';
 		version = match[1].replace('_', '.');
 	}
-
 	else if (match = /\bAndroid (\d+(\.\d+)?)/.exec(userAgent)) {
 		name    = 'android';
 		version = match[1];

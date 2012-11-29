@@ -1,4 +1,4 @@
-Clickable._enableClicking = function (os, isDOMNode, bindEvents, unbindEvents, addClass, removeClass) {
+Clickable._enableClicking = function (os, isDOMNode, isInDOM, bindEvents, unbindEvents, addClass, removeClass) {
 	var DEFAULT_ACTIVE_CLASS = 'active' ,
 		DATA_ACTIVE_CLASS    = 'data-clickable-class',
 		ACTIVE_DELAY         = 40;
@@ -30,7 +30,7 @@ Clickable._enableClicking = function (os, isDOMNode, bindEvents, unbindEvents, a
 
 		var touchDown  = false,
 			allowEvent = false,
-			lastTouch;
+			lastTouch, scroller, scrollTop;
 
 		elem.setAttribute(DATA_ACTIVE_CLASS, activeClass);
 		elem.style['-webkit-tap-highlight-color'] = 'rgba(255,255,255,0)';
@@ -40,7 +40,36 @@ Clickable._enableClicking = function (os, isDOMNode, bindEvents, unbindEvents, a
 
 
 
-		// Button class management
+		// Button state management
+
+		function setTouchDown () {
+			touchDown = true;
+			lastTouch = +new Date();
+
+			scroller = closestNativeIOSScroller(elem);
+			if (scroller) {
+				scrollTop = scroller.scrollTop;
+				scroller.addEventListener('scroll', onScroll, true);
+			}
+		}
+
+		function setTouchUp () {
+			if (scroller) {
+				scroller.removeEventListener('scroll', onScroll);
+			}
+			scroller  = null;
+			scrollTop = null;
+
+			touchDown = false;
+		}
+
+		function onScroll () {
+			cancelTouch();
+		}
+
+		function isTouchDown () {
+			return touchDown;
+		}
 
 		function activateButton () {
 			addClass(elem, activeClass);
@@ -136,17 +165,17 @@ Clickable._enableClicking = function (os, isDOMNode, bindEvents, unbindEvents, a
 
 			if (elem.disabled || !isClosestClickable(e.target, elem)) {
 				e.preventDefault();
-				touchDown = false;
+				setTouchUp();
 				return;
 			}
 
-			touchDown = true;
+			setTouchDown();
 			activateButton();
 		}
 
 		function cancelMouse (e) {
 			e.preventDefault();
-			touchDown  = false;
+			setTouchUp();
 			allowEvent = false;
 			deactivateButton();
 		}
@@ -154,12 +183,12 @@ Clickable._enableClicking = function (os, isDOMNode, bindEvents, unbindEvents, a
 		function endMouse (e) {
 			if (elem.disabled) {
 				e.preventDefault();
-				touchDown  = false;
+				setTouchUp();
 				allowEvent = false;
 				return;
 			}
 
-			if ( !touchDown ) {
+			if ( !isTouchDown() ) {
 				e.preventDefault();
 				allowEvent = false;
 			}
@@ -167,7 +196,7 @@ Clickable._enableClicking = function (os, isDOMNode, bindEvents, unbindEvents, a
 				allowEvent = true;
 			}
 
-			touchDown = false;
+			setTouchUp();
 			deactivateButton();
 		}
 
@@ -179,25 +208,32 @@ Clickable._enableClicking = function (os, isDOMNode, bindEvents, unbindEvents, a
 			allowEvent = false;
 
 			if (singleButtonLock || elem.disabled || (e.touches.length !== 1) || !isClosestClickable(e.target, elem)) {
-				touchDown = false;
+				setTouchUp();
 				return;
 			}
 
 			singleButtonLock = true;
-			touchDown        = true;
-			lastTouch        = +new Date();
-			var touch        = lastTouch;
+			setTouchDown();
+
+			if (scroller) {
+				if (scroller._isScrolling || (scrollTop < 0) || (scroller.scrollHeight < scrollTop)) {
+					setTouchUp();
+					return;
+				}
+			}
+
+			var touch = lastTouch;
 
 			setTimeout(function () {
-				if (touchDown && (touch === lastTouch)) {
+				if (isTouchDown() && (touch === lastTouch)) {
 					activateButton();
 				}
 			}, ACTIVE_DELAY);
 		}
 
 		function cancelTouch (e) {
-			allowEvent       = false;
-			touchDown        = false;
+			allowEvent = false;
+			setTouchUp();
 
 			if (e) {
 				singleButtonLock = false;
@@ -211,12 +247,21 @@ Clickable._enableClicking = function (os, isDOMNode, bindEvents, unbindEvents, a
 		}
 
 		function endTouch (e) {
-			var shouldFireEvent = touchDown;
+			var shouldFireEvent = isTouchDown(),
+				lastScroller    = scroller,
+				lastScrollTop   = scrollTop;
+
 			cancelTouch();
 
 			if (!shouldFireEvent || elem.disabled) {
 				singleButtonLock = false;
 				return;
+			}
+
+			if (lastScroller) {
+				if (lastScroller._isScrolling || (lastScroller.scrollTop !== lastScrollTop)) {
+					return;
+				}
 			}
 
 			if ( !e.stopImmediatePropagation ) {
@@ -268,12 +313,28 @@ Clickable._enableClicking = function (os, isDOMNode, bindEvents, unbindEvents, a
 		elem.dispatchEvent(evt);
 	}
 
+	function closestNativeIOSScroller (elem) {
+		if (!os.ios || (os.version < 5)) {
+			return;
+		}
+
+		while (elem = elem.parentNode) {
+			if (elem._scrollable) {
+				if (elem._iScroll) {
+					return;
+				}
+				return elem;
+			}
+		}
+	}
+
 
 
 	return enableClicking;
 }(
 	Clickable._os           , // from utils.js
 	Clickable._isDOMNode    , // from utils.js
+	Clickable._isInDOM      , // from utils.js
 	Clickable._bindEvents   , // from utils.js
 	Clickable._unbindEvents , // from utils.js
 	Clickable._addClass     , // from utils.js

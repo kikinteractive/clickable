@@ -21,7 +21,7 @@ var Clickable = function (Zepto, jQuery) {
 
 	// jQuery exports
 
-	if (jQuery) {
+	if (jQuery && jQuery.fn) {
 		jQuery.fn.clickable = function (activeClass) {
 			this.each(function () {
 				Clickable._enableClicking(this, activeClass);
@@ -40,7 +40,7 @@ var Clickable = function (Zepto, jQuery) {
 
 	// Zepto exports
 
-	if (Zepto) {
+	if (Zepto && Zepto.fn) {
 		Zepto.extend(Zepto.fn, {
 			clickable : function (activeClass) {
 				this.forEach(function (elem) {
