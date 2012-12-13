@@ -216,8 +216,12 @@ Clickable._enableClicking = function (os, isDOMNode, isInDOM, bindEvents, unbind
 			setTouchDown();
 
 			if (scroller) {
-				if (scroller._isScrolling || (scrollTop < 0) || (scroller.scrollHeight < scrollTop)) {
+				if ((scrollTop < 0) || (scroller.scrollHeight < scrollTop)) {
 					setTouchUp();
+					return;
+				}
+				else if (lastScroller._isScrolling) {
+					lastScroller._isScrolling = false;
 					return;
 				}
 			}
@@ -259,7 +263,11 @@ Clickable._enableClicking = function (os, isDOMNode, isInDOM, bindEvents, unbind
 			}
 
 			if (lastScroller) {
-				if (lastScroller._isScrolling || (lastScroller.scrollTop !== lastScrollTop)) {
+				if (lastScroller.scrollTop !== lastScrollTop) {
+					return;
+				}
+				else if (lastScroller._isScrolling) {
+					lastScroller._isScrolling = false;
 					return;
 				}
 			}
