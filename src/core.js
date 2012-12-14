@@ -222,6 +222,7 @@ Clickable._enableClicking = function (os, isDOMNode, isInDOM, bindEvents, unbind
 				}
 				else if (lastScroller._isScrolling) {
 					lastScroller._isScrolling = false;
+					setTouchUp();
 					return;
 				}
 			}
