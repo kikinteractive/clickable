@@ -30,6 +30,7 @@ Clickable._enableClicking = function (os, isDOMNode, isInDOM, bindEvents, unbind
 
 		var touchDown  = false,
 			allowEvent = false,
+			clientX, clientY,
 			lastTouch, scroller, scrollTop;
 
 		elem.setAttribute(DATA_ACTIVE_CLASS, activeClass);
@@ -42,9 +43,11 @@ Clickable._enableClicking = function (os, isDOMNode, isInDOM, bindEvents, unbind
 
 		// Button state management
 
-		function setTouchDown () {
+		function setTouchDown (x, y) {
 			touchDown = true;
 			lastTouch = +new Date();
+			clientX   = x;
+			clientY   = y;
 
 			scroller = closestNativeIOSScroller(elem);
 			if (scroller) {
@@ -60,6 +63,8 @@ Clickable._enableClicking = function (os, isDOMNode, isInDOM, bindEvents, unbind
 			scroller  = null;
 			scrollTop = null;
 
+			clientX   = null;
+			clientY   = null;
 			touchDown = false;
 		}
 
@@ -169,7 +174,7 @@ Clickable._enableClicking = function (os, isDOMNode, isInDOM, bindEvents, unbind
 				return;
 			}
 
-			setTouchDown();
+			setTouchDown(e.clientX, e.clientY);
 			activateButton();
 		}
 
@@ -213,7 +218,9 @@ Clickable._enableClicking = function (os, isDOMNode, isInDOM, bindEvents, unbind
 			}
 
 			singleButtonLock = true;
-			setTouchDown();
+
+			var touch = e.changedTouches[0];
+			setTouchDown(touch.clientX, touch.clientY);
 
 			if (scroller) {
 				if (scroller._isScrolling || (scrollTop < 0) || (scroller.scrollHeight < scrollTop)) {
@@ -249,7 +256,9 @@ Clickable._enableClicking = function (os, isDOMNode, isInDOM, bindEvents, unbind
 		function endTouch (e) {
 			var shouldFireEvent = isTouchDown(),
 				lastScroller    = scroller,
-				lastScrollTop   = scrollTop;
+				lastScrollTop   = scrollTop,
+				x               = clientX,
+				y               = clientY;
 
 			cancelTouch();
 
@@ -273,7 +282,7 @@ Clickable._enableClicking = function (os, isDOMNode, isInDOM, bindEvents, unbind
 
 			if (touchDuration > ACTIVE_DELAY) {
 				allowEvent = true;
-				fireClickEvent(elem);
+				fireClickEvent(elem, x, y);
 			}
 			else {
 				activateButton();
@@ -281,7 +290,7 @@ Clickable._enableClicking = function (os, isDOMNode, isInDOM, bindEvents, unbind
 				setTimeout(function () {
 					deactivateButton();
 					allowEvent = true;
-					fireClickEvent(elem);
+					fireClickEvent(elem, x, y);
 				}, 1);
 			}
 		}
@@ -302,11 +311,11 @@ Clickable._enableClicking = function (os, isDOMNode, isInDOM, bindEvents, unbind
 		return false;
 	}
 
-	function fireClickEvent (elem) {
+	function fireClickEvent (elem, x, y) {
 		var evt = document.createEvent('MouseEvents');
 		evt.initMouseEvent(
 			'click' , true , true , window,
-			1       , 0    , 0    , 0     , 0,
+			1       , x||0 , y||0 , x||0  , y||0,
 			false   , false, false, false ,
 			0       , null
 		);
