@@ -48,7 +48,10 @@ Clickable._enableStickyClick = function (trimString, isDOMNode, enableClicking) 
 			}
 			catch (err) {
 				if (window.console && window.console.error) {
-					window.console.error(err + '');
+					window.console.error(err);
+					if ((typeof err === 'object') && err.stack) {
+						window.console.error(err.stack);
+					}
 				}
 
 				cleanUp();
