@@ -44,7 +44,7 @@ Clickable._enableStickyClick = function (trimString, isDOMNode, enableClicking) 
 			button.className += ' ' + activeClass;
 
 			try {
-				value = holdFunction(cleanUp);
+				value = holdFunction.call(button, cleanUp);
 			}
 			catch (err) {
 				if (window.console && window.console.error) {
