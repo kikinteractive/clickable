@@ -119,7 +119,7 @@ Clickable._enableClicking = function (os, isDOMNode, isInDOM, bindEvents, unbind
 		function bindTouchEvents () {
 			bindEvents(elem, {
 				touchstart  : startTouch  ,
-				touchmove   : cancelTouch ,
+				touchmove   : moveTouch ,
 				touchcancel : cancelTouch ,
 				touchend    : endTouch
 			});
@@ -128,7 +128,7 @@ Clickable._enableClicking = function (os, isDOMNode, isInDOM, bindEvents, unbind
 		function unbindTouchEvents () {
 			unbindEvents(elem, {
 				touchstart  : startTouch  ,
-				touchmove   : cancelTouch ,
+				touchmove   : moveTouch ,
 				touchcancel : cancelTouch ,
 				touchend    : endTouch
 			});
@@ -251,6 +251,16 @@ Clickable._enableClicking = function (os, isDOMNode, isInDOM, bindEvents, unbind
 			}
 
 			deactivateButton();
+		}
+
+		function moveTouch(e) {
+			var pos = {
+				x: e.touches[0].pageX,
+				y: e.touches[0].pageY
+			};
+			if (elem !== document.elementFromPoint(pos.x, pos.y)) {
+				cancelTouch(e);
+			}
 		}
 
 		function endTouch (e) {
