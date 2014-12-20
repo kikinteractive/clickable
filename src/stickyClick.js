@@ -35,9 +35,16 @@ Clickable._enableStickyClick = function (trimString, isDOMNode, enableClicking) 
 	}
 
 	function createStickyClickHandler (button, holdFunction) {
+		var holdLock    = false,
+			activeClass = button.getAttribute(DATA_ACTIVE_CLASS);
+
 		return function () {
-			var lock        = false,
-				activeClass = button.getAttribute(DATA_ACTIVE_CLASS),
+			if (holdLock) {
+				return;
+			}
+			holdLock = true;
+
+			var cleanUpLock = false,
 				value;
 
 			button.disabled = true;
@@ -64,10 +71,12 @@ Clickable._enableStickyClick = function (trimString, isDOMNode, enableClicking) 
 			}
 
 			function cleanUp () {
-				if (lock) {
+				if (cleanUpLock) {
 					return;
 				}
-				lock = true;
+				cleanUpLock = true;
+
+				holdLock = false;
 
 				if (button.disabled) {
 					button.disabled = false;
