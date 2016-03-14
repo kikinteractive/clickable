@@ -16,6 +16,11 @@ var Clickable = function (Zepto, jQuery) {
 	Clickable.sticky = function () {
 		Clickable._enableStickyClick.apply(this, arguments);
 	};
+	Clickable.unsticky = function (elem) {
+		if (typeof elem === 'object' && elem && typeof elem._removeStickyClick === 'function') {
+			elem._removeStickyClick();
+		}
+	};
 
 
 
@@ -31,6 +36,12 @@ var Clickable = function (Zepto, jQuery) {
 		jQuery.fn.stickyClick = function (holdFunction) {
 			this.each(function () {
 				Clickable._enableStickyClick(this, holdFunction);
+			});
+			return this;
+		};
+		jQuery.fn.unstickyClick = function (holdFunction) {
+			this.each(function () {
+				Clickable.unsticky(this);
 			});
 			return this;
 		};
@@ -51,6 +62,12 @@ var Clickable = function (Zepto, jQuery) {
 			stickyClick : function (holdFunction) {
 				this.forEach(function (elem) {
 					Clickable._enableStickyClick(elem, holdFunction);
+				});
+				return this;
+			},
+			unstickyClick : function (holdFunction) {
+				this.forEach(function (elem) {
+					Clickable.unsticky(this);
 				});
 				return this;
 			}

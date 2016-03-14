@@ -26,12 +26,13 @@ Clickable._enableStickyClick = function (trimString, isDOMNode, enableClicking) 
 
 		enableClicking(button, activeClass);
 
-		button.addEventListener(
-			'click',
-			createStickyClickHandler(button, holdFunction),
-			false
-		);
-
+		var handler = createStickyClickHandler(button, holdFunction);
+		button.addEventListener('click', handler, false);
+		if (button._removeStickyClick) {
+			button._removeStickyClick = function () {
+				button.removeEventListener('click', handler);
+			};
+		}
 	}
 
 	function createStickyClickHandler (button, holdFunction) {
@@ -90,7 +91,6 @@ Clickable._enableStickyClick = function (trimString, isDOMNode, enableClicking) 
 			}
 		};
 	}
-
 
 	return enableStickyClick;
 }(
